@@ -1,10 +1,11 @@
 # joy-prime
 The Joy Prime Programming Language (Vaporware)
 
-Joy Prime (commonly written Joy') is an idea for a new language based on Clojure.
+Joy Prime is an idea for a new language based on Clojure.
 The "Prime" suffix honors the original [Joy language](https://en.wikipedia.org/wiki/Joy_(programming_language))
-created by Manfred von Thun of La Trobe University, Australia, who died on October 23, 2011. After spelling it out
-once to provide a search-engine anchor, the preferred spelling is Joy'. It is normally spoken as simply "joy".
+created by Manfred von Thun of La Trobe University, Australia. (He died on October 23, 2011.) After spelling
+out "Joy Prime" once to provide a search-engine anchor, the language's preferred spelling is Joy'. 
+The preferred pronunciation is simply "joy".
 
 Mostly, Joy' is Clojure. It embraces Clojure's syntax, data types, and most of Clojure's implementation.
 It embraces and extends Clojure's use of heterogenous maps with namespaced keywords as keys. It continues 
