@@ -52,7 +52,7 @@ spectrum that is painful from end to end -- it has no sweet spot:
 Joy' explores a new point in the design space: an expressive and rigorous type system that fulfills
 a type system's traditional role for thinking and communicating about the code, but that is designed 
 for runtime validation instead of compile-time validation. Runtime validation includes both 
-switchable runtime checks and automatic generative testing.
+switchable runtime checks and automatic [generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
 
 Joy' makes other important changes from Clojure: 
 
@@ -91,7 +91,8 @@ Joy' makes other important changes from Clojure:
     
   * Each primitive Clojure datatype has a Joy' class, and can be constructed through normal Clojure functions.
   
-  * Each user-defined Joy' class has one or more constructors, which always take a type belonging to
-    that class as a first argument.
+  * Each user-defined Joy' class has one or more constructors. Each constructor takes a type (the runtime 
+    representation of a type) belonging to that class as a first argument. Constructors are invoked
+    by client code to create instances of the class, and also are used for generative testing.
 
 
