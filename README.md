@@ -97,6 +97,67 @@ switchable runtime checks and automatic [generative testing](https://nofluffjust
   
   * Each user-defined Joy' class has one or more constructors. Each constructor takes a type (the runtime 
     representation of a type) belonging to that class as a first argument. Constructors are invoked
-    by client code to create instances of the class, and also are used for generative testing.
+    by client code to create instances of the class, and also are used for generative testing.  
+    
+A Joy' class definition can specify any or all of the following:
 
+* *interface*: the names and types of a set of pure functions that can be invoked on any member of the class
 
+* *implementation*: bodies for the interface functions
+
+* *representation*: the required and optional keys of a heterogeneous map, where each key is namespaced  
+  and always has the same value type regardless of the class in which it appears.
+  
+Each Joy' class definition also defines its *type class*: the class of its types. A Joy' type is
+a value that specifies constraints on values of a particular class -- the type's *value class*.
+
+A type class usually specifies an interface that defines one or more constructors, which are simply
+methods on the type class that return members of the value class.
+
+Each Joy' class has zero or more parent classes. The set of parent classes is open: new parents can be 
+added to a class after it is defined. The set of parent classes is ordered: each interface method invocation
+uses the first implementation in the ordered set of parent classes. When new parents are added after the child
+class is defined, they can only be added to the end of the list. Newly added parents cannot directly or 
+(through ancestors) indirectly specify representations.
+
+Here are some common ways of using parent classes:
+
+* A parent class may only specify an interface, leaving the implementation and representation up to the child.
+
+* A parent class may specify an interface and an implementation, in which case it is effectively a mix-in.
+
+* A parent class may specify a representation, which may be used as-is or extended by the client.
+
+Every Joy' type class is a subclass of `:joy.core/type`, which defines the following interface:
+```clojure
+(new "Constructs a value of this type from the map `m`. If this type specifies a representation,
+      then `m` must be an instance of that representation and `new` is a no-op." 
+ [this [m :- :joy.core/Map]] :- value)
+
+(old "Creates a map that can be passed to `new` to exactly reproduce `this`." 
+ [this [v :- value]] :- :joy.core/Map)
+```
+
+When a class specifies a representation, this completely defines values of the class: it is fine
+to create members of the class by creating a map with the specified keys. However, a parent class
+representation is presumed to only partially define representations of subclasses. If a subclass also
+defines a representation, its keys must be a superset of (including possibly the same as) the keys of 
+the parent class. If a subclass does not define a representation, then a map containing a parent class'
+represent keys cannot be presumed a valid instance of the subclass.
+
+When neither a class nor any of its superclasses specify a representation, values of the class are 
+opaque to Joy' code. All Joy' operations on values of the class must be implemented using methods of 
+interfaces defined by the class or its superclasses. All Joy' construction of values of the class must
+be done through methods of interfaces defined by the class' type class.
+
+Some opaque Joy' values are implemented in Clojure or Java. This includes values defined in `joy.core`,
+which are considered "primitive" Joy' values. Clojure interoperability provides additional constructors 
+and operators for such values.
+
+Every Joy' value can be represented in [EDN](https://github.com/edn-format/edn) (Clojure's Extensible Data Notation)
+as a map with two keys:
+
+* `:joy.core/class` the keyword that identifies the value's class
+* `:joy.core/new-map` the map (possibly returned by `old`) to be passed to `new` to reproduce the value
+
+Every built-in EDN element represents a primitive Joy' value.
