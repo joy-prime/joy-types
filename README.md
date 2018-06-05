@@ -1,38 +1,24 @@
-# The Joy Prime Programming Language (Vaporware)
+# The Joy Prime Type System, for Use in Clojure
 
-Joy Prime is an idea for a new language based on Clojure.
-The "Prime" suffix honors the original [Joy language](https://en.wikipedia.org/wiki/Joy_(programming_language))
-created by Manfred von Thun of La Trobe University, Australia. (He died on October 23, 2011.) After spelling
-out "Joy Prime" once to provide a search-engine anchor, the language's preferred spelling is Joy'. 
-The preferred pronunciation is simply "joy".
+This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) runtime type system
+for use in Clojure programs. Although Joy' provides additional language support, it deeply embraces
+its Clojure roots, and Clojure is a first-class client of the Joy' type system. This type system does
+reuse and modify concepts and terminology from Java, such as "class" and "interface", so the reader
+must deeply embrace namespacing! 
 
-Mostly, Joy' is Clojure. It embraces Clojure's syntax, most of its data types, and most of its implementation.
-Joy' continues Clojure's approach of preferring and encouraging immutability without forcing it.
- 
-However, Joy' makes certain changes that result in a substantially different programming experience.
-In particular, Joy' embraces Clojure's preference for runtime types instead of compile-time types,
-but carries this considerably further. Joy' has a well-developed type system that has
-much of the flavor of [dependent types](https://en.wikipedia.org/wiki/Dependent_types),
-but that is designed for runtime verification instead of compile-time verification.
+The Joy' type system is inspired by the [alpha version of Clojure spec](https://clojure.org/guides/spec).
+Like all offspring, however, it is inspired to embrace some of its parent's philosophies and characteristics
+while rejecting others.
 
-Joy's design is partly driven by a belief that Clojure awkwardly blends some great new ideas
-with its Java roots. Joy's type system deeply embraces Clojure's use of heterogenous maps with 
-namespaced keywords as keys, including Clojure's momentum toward giving the same semantics
-to any given namespaced keyword wherever it is used. Joy' drops Clojure records and protocols; 
-these are an awkward fit with even Clojure's use of heterogeneous maps, and certainly at odds 
-with Joy's type system.
+The Joy' type system embraces the following philosophies and characteristics of the alpha version of Clojure spec:
 
-In fact, Joy' drops all direct Java interoperability. Instead, Joy' is fully interoperable with Clojure,
-which gives it a natural indirect interoperability with Java. Whereas Clojure deliberately exposes all
-Java semantics, Joy' attempts to build an airtight abstraction that hides all Java semantics. For example,
-Clojure functions such as `type` that expose the underlying Java implementation are available through 
-Joy's Clojure interoperability, but are treated at the Joy' level as foreign interfaces.
+*
 
-Joy' also drops Clojure multimethods. Instead of multimethods and protocols, Joy' tries to provide 
-a clearer, better reified, more expressive, and more verifiable "interface" abstraction, with 
-new approaches to type hierarchies and polymorphism.  
+However, the Joy' type system rejects the following philosophies and characteristics of the alpha version of Clojure spec: 
 
-## Joy's Type System 
+*
+
+## The Joy' Type System 
 
 Joy's type system design is driven by the following beliefs:
 

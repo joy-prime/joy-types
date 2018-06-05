@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/joy-prime.iml" filepath="$PROJECT_DIR$/joy-prime.iml" />
+      <module fileurl="file://$PROJECT_DIR$/joy-types.iml" filepath="$PROJECT_DIR$/joy-types.iml" />
     </modules>
   </component>
 </project>
