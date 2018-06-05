@@ -132,10 +132,10 @@ Every Joy' type class is a subclass of `:joy.core/type`, which defines the follo
 ```clojure
 (new "Constructs a value of this type from the map `m`. If this type specifies a representation,
       then `m` must be an instance of that representation and `new` is a no-op." 
- [this [m :- :joy.core/Map]] :- value)
+ (! [this (! m :joy.core/Map)] Value))
 
 (old "Creates a map that can be passed to `new` to exactly reproduce `this`." 
- [this [v :- value]] :- :joy.core/Map)
+ (! [this (! v Value)] :joy.core/Map))
 ```
 
 When a class specifies a representation, this completely defines values of the class: it is fine
