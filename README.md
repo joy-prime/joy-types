@@ -1,22 +1,18 @@
 # The Joy Prime Type System, for Use in Clojure
 
-This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) runtime type system
+This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) (Joy') runtime type system
 for use in Clojure programs. Although Joy' provides additional language support, it deeply embraces
 its Clojure roots, and Clojure is a first-class client of the Joy' type system. This type system does
 reuse and modify concepts and terminology from Java, such as "class" and "interface", so the reader
-must deeply embrace namespacing! 
+must deeply embrace namespacing!
 
-The Joy' type system is inspired by the [alpha version of Clojure spec](https://clojure.org/guides/spec).
-Like all offspring, however, it is inspired to embrace some of its parent's philosophies and characteristics
-while rejecting others.
-
-The Joy' type system embraces the following philosophies and characteristics of the alpha version of Clojure spec:
-
-*
-
-However, the Joy' type system rejects the following philosophies and characteristics of the alpha version of Clojure spec: 
-
-*
+The Joy' type system is inspired by the alpha version of [Clojure spec](https://clojure.org/guides/spec).
+As with all offspring, however, this inspiration is evident partly in where Joy' took the same path
+as spec and partly in where it went bushwhacking in another direction. Joy' 
+embraces spec's vision of optionally, gradually expressing contracts in the runtime language. But unlike
+spec, Joy' treats interfaces and types as first-class notions that deserve at least as much support as 
+data "shapes". Joy' also departs from spec (at least spec alpha) in reifying its types as values
+that are naturally understood and verified in that same type system.
 
 ## The Joy' Type System 
 
@@ -59,22 +55,72 @@ a type system's traditional role for thinking and communicating about the code, 
 for runtime validation instead of compile-time validation. Runtime validation includes both 
 switchable runtime checks and automatic [generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
 
-* With Java concepts out of the (direct) picture, Joy' reimagines some of them and reuses the names:
+With Java concepts out of the (direct) picture, Joy' reimagines some of them and reuses the names:
 
-  * Joy' has its own notions of "type" and "class". Joy' classes are discretely identified categories of types. 
-    Classes are organized into a hierarchy, which is a subtype relationship. All types within a class 
-    are subtypes of the raw class, and some of them are subtypes of each other. Every Joy' value belongs to
-    a single class, which is known at runtime. It is always possible to determine at runtime whether a given
-    Joy' value belongs to a given Joy type. Classes and types define the structure of their values but
-    do not directly define operations on those values.
+* Joy' has its own notions of "type" and "class". A Joy' type describes a constrained set of Joy' values,
+  such as "a vector of integers". A Joy' class identifies a constrained set of Joy' types, such as "vectors".
+ 
+* From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
+  runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
+  analysis for various reasons (such as to detect errors or to optimize code) but this is neither 
+  the main purpose of Joy' classes and types nor how programmers are encouraged to think about them.
+
+* Every Joy' value has a class, which can be cheaply obtained from the value.
+
+* Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
+  bare vector type. All values having that class are members of that bare class type.
+
+* If the set of types identified by a class has additional members beyond the bare class type, 
+  then these additional "class types" are subtypes of the bare class type. For example, all vector types
+  are subtypes of the bare vector type.
+
+* Joy' types are also Joy' values and can be freely manipulated at runtime.
+
+* Because types are values, types themselves have classes and types. Each Joy' class has an 
+  associated "metatype", which is the type of that class' types.
+
+* A class can have one or more "interfaces", which are "interface implementations" of "interface types".
+  An interface type specifies a set of Clojure symbols that refer to specially declared functions:
+  the "methods" of the interface. Each of these methods takes an instance of the interface type as its
+  first parameter and can be invoked directly by client code. An interface implementation is a map from 
+  method to function. 
+  
+  
+  Each of those keywords identifies a function type whose first parameter is declared as the interface type.
+  An interface implementation is a map from each method keyword to a function of the appropriate type.
+  
+An interface is a set of function types called 
+  "methods". Every interface has an associated "interface type", which is a supertype of all 
+  types that support the interface. Every method on an interface takes a member of the interface type 
+  as its first parameter.
+
+A Joy' class definition can specify any or all of the following: 
     
-  * Joy' specifies operations on values by allowing classes to be subtypes of "interfaces".
-    This is also the basis for polymorphism in Joy'.
-    Similarly to Java, a Joy' interface defines a set of "methods" that each take the same target value
-    as a first parameter. A child class automatically supports all interfaces supported by its ancestor
-    classes (else it would not be a subtype of its ancestor classes). The child may inherent its ancestors'
-    implementations or provide its own. Unrelated classes can support the same interfaces, in which case they must
-    each provide their own implementations. A class can have multiple parents, and inherits
+* *parent types*: supertypes of the bare class type. These are listed in priority order for the purpose
+  of choosing the implementation of an interface if more than one is available. Additional parent types
+  can be appended to a previously defined class.
+
+* *interfaces*: can be invoked on all values that are members of the bare class type
+
+* *interface implementations*
+
+ 
+    
+    
+  * A class can implement some or all 
+  
+  
+    All types within a class are subtypes of the raw class and some of them are subtypes of each other. 
+    Every Joy' value belongs directly to a single class, which is known at runtime. It is always possible to
+    determine at runtime whether a given Joy' value belongs to a given Joy type.
+    
+    
+  * Joy' classes are  
+    
+    A child class automatically supports all interfaces 
+    supported by its ancestor classes (else it would not be a subtype of its ancestor classes). The child may inherent 
+    its ancestors' implementations or provide its own. Unrelated classes can support the same interfaces, in which case 
+    they must each provide their own implementations. A class can have multiple parents, and inherits
     interface implementations through all of them parents, so parent classes can act as mixins. 
     A class' parents are listed in priority order for choosing an implementation when multiple ancestors provide
     implementations of the same interface.
@@ -87,12 +133,11 @@ switchable runtime checks and automatic [generative testing](https://nofluffjust
     
 A Joy' class definition can specify any or all of the following:
 
-* *interface*: the names and types of a set of pure functions that can be invoked on any member of the class
+* *interface*: the names and types of a set of pure functions that can be invoked on any member of this class
 
 * *implementation*: bodies for the interface functions
 
-* *representation*: the required and optional keys of a heterogeneous map, where each key is namespaced  
-  and always has the same value type regardless of the class in which it appears.
+* *supertypes*: an ordered list of supertypes of this class 
   
 Each Joy' class definition also defines its *type class*: the class of its types. A Joy' type is
 a value that specifies constraints on values of a particular class -- the type's *value class*.
