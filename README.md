@@ -1,4 +1,4 @@
-# The Joy Prime Type System, for Use in Clojure
+# The Joy' Type System, for Use in Clojure
 
 This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) (Joy') runtime type system
 for use in Clojure programs. Although Joy' provides additional language support, it deeply embraces
@@ -14,7 +14,7 @@ spec, Joy' treats interfaces and types as first-class notions that deserve at le
 data "shapes". Joy' also departs from spec (at least spec alpha) in reifying its types as values
 that are naturally understood and verified in that same type system.
 
-## The Joy' Type System 
+## Motivations 
 
 Joy's type system design is driven by the following beliefs:
 
@@ -50,117 +50,69 @@ spectrum that is painful from end to end -- it has no sweet spot:
   behavior. The programmer is often forced to literally construct proofs of program invariants that are asserted
   through the type system.
   
+## Overview
+  
 Joy' explores a new point in the design space: an expressive and rigorous type system that fulfills
 a type system's traditional role for thinking and communicating about the code, but that is designed 
 for runtime validation instead of compile-time validation. Runtime validation includes both 
 switchable runtime checks and automatic [generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
 
-With Java concepts out of the (direct) picture, Joy' reimagines some of them and reuses the names:
+Note that Joy's type system is described in terms that are familiar from Java or other languages,
+such as "class", "type", and "interface". Although at an abstract level these terms have their
+conventional meaning, Joy's specific usage is unique. In particular, none of these terms mean the
+same as in Clojure or Java. It is important to firmly anchor these terms in a mental Joy' namespace! 
 
-* Joy' has its own notions of "type" and "class". A Joy' type describes a constrained set of Joy' values,
-  such as "a vector of integers". A Joy' class identifies a constrained set of Joy' types, such as "vectors".
- 
-* From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
-  runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
-  analysis for various reasons (such as to detect errors or to optimize code) but this is neither 
-  the main purpose of Joy' classes and types nor how programmers are encouraged to think about them.
+Joy' has its own notions of "type" and "class". A Joy' type describes a constrained set of Joy' values,
+such as "a vector of integers". A Joy' class identifies a constrained set of Joy' types, such as "vectors".
 
-* Every Joy' value has a class, which can be cheaply obtained from the value.
+From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
+runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
+analysis for various reasons (such as to detect errors or to optimize code) but this is neither 
+the main purpose of Joy' classes and types nor how programmers are encouraged to think about them.
 
-* Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
-  bare vector type. All values having that class are members of that bare class type.
+Every Joy' value has a class, which can be cheaply obtained from the value.
 
-* If the set of types identified by a class has additional members beyond the bare class type, 
-  then these additional "class types" are subtypes of the bare class type. For example, all vector types
-  are subtypes of the bare vector type.
+Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
+bare vector type. All values having that class are members of that bare class type.
 
-* Joy' types are also Joy' values and can be freely manipulated at runtime.
+If the set of types identified by a class has additional members beyond the bare class type, 
+then these additional "class types" are subtypes of the bare class type. For example, all vector types
+are subtypes of the bare vector type.
 
-* Because types are values, types themselves have classes and types. Each Joy' class has an 
-  associated "metatype", which is the type of that class' types.
+Joy' types are also Joy' values and can be freely manipulated at runtime.
 
-* A class can have one or more "interfaces", which are "interface implementations" of "interface types".
-  An interface type specifies a set of Clojure symbols that refer to specially declared functions:
-  the "methods" of the interface. Each of these methods takes an instance of the interface type as its
-  first parameter and can be invoked directly by client code. An interface implementation is a map from 
-  method to function. 
-  
-  
-  Each of those keywords identifies a function type whose first parameter is declared as the interface type.
-  An interface implementation is a map from each method keyword to a function of the appropriate type.
-  
-An interface is a set of function types called 
-  "methods". Every interface has an associated "interface type", which is a supertype of all 
-  types that support the interface. Every method on an interface takes a member of the interface type 
-  as its first parameter.
+Because types are values, types themselves have classes and types. Each Joy' class has an 
+associated "metatype", which is the type of that class' types.
 
-A Joy' class definition can specify any or all of the following: 
+A class can have one or more "interfaces", which are "interface implementations" of "interface types".
+An interface type specifies a set of Clojure symbols that refer to specially declared functions:
+the "methods" of the interface. Each method takes an instance of the interface type as its
+first parameter and can be invoked directly by client code. An interface implementation is a map from 
+method symbol to functions that implement the method for that class. 
+
+## Class Definitions
+
+A Joy' class definition can specify the following: 
     
+* *metatype*: the type of the class' types. If this is unspecified, the class is provided with a metatype
+  that has a single value representing the bare class type.
+
 * *parent types*: supertypes of the bare class type. These are listed in priority order for the purpose
-  of choosing the implementation of an interface if more than one is available. Additional parent types
-  can be appended to a previously defined class.
+  of choosing the implementation of an interface if more than one is available. The list of parent types
+  cannot be changed after the class is defined (unless the class is entirely redefined).
 
-* *interfaces*: can be invoked on all values that are members of the bare class type
-
-* *interface implementations*
-
- 
-    
-    
-  * A class can implement some or all 
+* *interfaces*: can be invoked on all values that are members of the bare class type. Additional interfaces
+  can be added after the class is defined. 
   
+## Function Types
   
-    All types within a class are subtypes of the raw class and some of them are subtypes of each other. 
-    Every Joy' value belongs directly to a single class, which is known at runtime. It is always possible to
-    determine at runtime whether a given Joy' value belongs to a given Joy type.
-    
-    
-  * Joy' classes are  
-    
-    A child class automatically supports all interfaces 
-    supported by its ancestor classes (else it would not be a subtype of its ancestor classes). The child may inherent 
-    its ancestors' implementations or provide its own. Unrelated classes can support the same interfaces, in which case 
-    they must each provide their own implementations. A class can have multiple parents, and inherits
-    interface implementations through all of them parents, so parent classes can act as mixins. 
-    A class' parents are listed in priority order for choosing an implementation when multiple ancestors provide
-    implementations of the same interface.
-    
-  * Each primitive Clojure datatype has a Joy' class, and can be constructed through normal Clojure functions.
-  
-  * Each user-defined Joy' class has one or more constructors. Each constructor takes a type (the runtime 
-    representation of a type) belonging to that class as a first argument. Constructors are invoked
-    by client code to create instances of the class, and also are used for generative testing.  
-    
-A Joy' class definition can specify any or all of the following:
+## Metatypes
 
-* *interface*: the names and types of a set of pure functions that can be invoked on any member of this class
+A metatype usually has an interface that defines one or more constructors, which are methods that return members
+of the value class.
 
-* *implementation*: bodies for the interface functions
-
-* *supertypes*: an ordered list of supertypes of this class 
-  
-Each Joy' class definition also defines its *type class*: the class of its types. A Joy' type is
-a value that specifies constraints on values of a particular class -- the type's *value class*.
-
-A type class usually specifies an interface that defines one or more constructors, which are simply
-methods on the type class that return members of the value class.
-
-Each Joy' class has zero or more parent classes. The set of parent classes is open: new parents can be 
-added to a class after it is defined. The set of parent classes is ordered: each interface method invocation
-uses the first implementation in the ordered set of parent classes. When new parents are added after the child
-class is defined, they can only be added to the end of the list. Newly added parents cannot directly or 
-(through ancestors) indirectly specify representations.
-
-Here are some common ways of using parent classes:
-
-* A parent class may only specify an interface, leaving the implementation and representation up to the child.
-
-* A parent class may specify an interface and an implementation, in which case it is effectively a mix-in.
-
-* A parent class may specify a representation, which may be used as-is or extended by the client.
-
-Every Joy' type class is a subclass of `:joy.core/type`, which defines the following interface:
-```clojure
+Every Joy' metatype is a subclass of `:joy.core/type`, which defines the following interface:
+```
 (new "Constructs a value of this type from the map `m`. If this type specifies a representation,
       then `m` must be an instance of that representation and `new` is a no-op." 
  (! [this (! m :joy.core/Map)] Value))
@@ -168,27 +120,3 @@ Every Joy' type class is a subclass of `:joy.core/type`, which defines the follo
 (old "Creates a map that can be passed to `new` to exactly reproduce `this`." 
  (! [this (! v Value)] :joy.core/Map))
 ```
-
-When a class specifies a representation, this completely defines values of the class: it is fine
-to create members of the class by creating a map with the specified keys. However, a parent class
-representation is presumed to only partially define representations of subclasses. If a subclass also
-defines a representation, its keys must be a superset of (including possibly the same as) the keys of 
-the parent class. If a subclass does not define a representation, then a map containing a parent class'
-represent keys cannot be presumed a valid instance of the subclass.
-
-When neither a class nor any of its superclasses specify a representation, values of the class are 
-opaque to Joy' code. All Joy' operations on values of the class must be implemented using methods of 
-interfaces defined by the class or its superclasses. All Joy' construction of values of the class must
-be done through methods of interfaces defined by the class' type class.
-
-Some opaque Joy' values are implemented in Clojure or Java. This includes values defined in `joy.core`,
-which are considered "primitive" Joy' values. Clojure interoperability provides additional constructors 
-and operators for such values.
-
-Every Joy' value can be represented in [EDN](https://github.com/edn-format/edn) (Clojure's Extensible Data Notation)
-as a map with two keys:
-
-* `:joy.core/class` the keyword that identifies the value's class
-* `:joy.core/new-map` the map (possibly returned by `old`) to be passed to `new` to reproduce the value
-
-Every built-in EDN element represents a primitive Joy' value.
