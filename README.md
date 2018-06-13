@@ -60,8 +60,9 @@ such as "class", "type", and "interface". Although at an abstract level these te
 conventional meaning, Joy's specific usage is unique. In particular, none of these terms mean the
 same as in Clojure or Java. It is important to firmly anchor these terms in a mental Joy' namespace! 
 
-Joy' has its own notions of "type" and "class". A Joy' type describes a constrained set of Joy' values,
-such as "a vector of integers". A Joy' class identifies a constrained set of Joy' types, such as "vectors".
+A Joy' type describes a constrained set of Joy' values, such as "a vector of integers". 
+
+A Joy' class identifies a constrained set of Joy' types, such as "vectors".
 
 From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
 runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
