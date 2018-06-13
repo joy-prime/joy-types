@@ -1,10 +1,8 @@
 # The Joy' Type System, for Use in Clojure
 
 This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) (Joy') runtime type system
-for use in Clojure programs. Although Joy' provides additional language support, it deeply embraces
-its Clojure roots, and Clojure is a first-class client of the Joy' type system. This type system does
-reuse and modify concepts and terminology from Java, such as "class" and "interface", so the reader
-must deeply embrace namespacing!
+for use in Clojure programs. Although Joy' provides additional language support, Clojure is a first-class client 
+of the Joy' type system. 
 
 The Joy' type system is inspired by the alpha version of [Clojure spec](https://clojure.org/guides/spec).
 As with all offspring, however, this inspiration is evident partly in where Joy' took the same path
