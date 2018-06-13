@@ -55,7 +55,7 @@ a type system's traditional role for thinking and communicating about the code, 
 for runtime validation instead of compile-time validation. Runtime validation includes both 
 switchable runtime checks and automatic [generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
 
-Note that Joy's type system is described in terms that are familiar from Java or other languages,
+Joy's type system is described in terms that are familiar from Java or other languages,
 such as "class", "type", and "interface". Although at an abstract level these terms have their
 conventional meaning, Joy's specific usage is unique. In particular, none of these terms mean the
 same as in Clojure or Java. It is important to firmly anchor these terms in a mental Joy' namespace! 
