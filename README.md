@@ -78,6 +78,8 @@ If the set of types identified by a class has additional members beyond the bare
 then these additional "class types" are subtypes of the bare class type. For example, all vector types
 are subtypes of the bare vector type.
 
+It is always possible to determine at runtime whether a given type is a subtype of another.
+
 Joy' types are also Joy' values and can be freely manipulated at runtime.
 
 Because types are values, types themselves have classes and types. Each Joy' class has an 
@@ -100,10 +102,21 @@ A Joy' class definition can specify the following:
   of choosing the implementation of an interface if more than one is available. The list of parent types
   cannot be changed after the class is defined (unless the class is entirely redefined).
 
-* *interfaces*: can be invoked on all values that are members of the bare class type. Additional interfaces
+* *interfaces*: defined for all values that are members of the bare class type. Additional interfaces
   can be added after the class is defined. 
   
 ## Function Types
+
+All Clojure functions are members of the bare function type `joy/bare-type(::joy/function)`. 
+Clojure functions can also be declared with metadata that declares them to have more specific function subtypes. 
+Note that this metadata is *not* associated with the function's symbol; rather, it is associated with
+the function object itself. It is the value of the key `joy.core/function-type`, which must be a subtype of the 
+bare function type.
+
+As with all Joy' classes, `::joy/function` has an open set of subclasses and subtypes. Joy' provides 
+a subclass `::joy/arg-pattern-function` that follows Clojure spec alpha in modeling a function's parameters  
+as a single vector with a regular expression of element types. This is a flexible and familiar model
+with a natural subtype structure. 
   
 ## Metatypes
 
