@@ -110,13 +110,24 @@ A Joy' class definition can specify the following:
 All Clojure functions are members of the bare function type `joy/bare-type(::joy/function)`. 
 Clojure functions can also be declared with metadata that declares them to have more specific function subtypes. 
 Note that this metadata is *not* associated with the function's symbol; rather, it is associated with
-the function object itself. It is the value of the key `joy.core/function-type`, which must be a subtype of the 
+the function object itself. It is the value of the key `::joy/type-of-fn`, which must be a subtype of the 
 bare function type.
 
 As with all Joy' classes, `::joy/function` has an open set of subclasses and subtypes. Joy' provides 
-a subclass `::joy/arg-pattern-function` that follows Clojure spec alpha in modeling a function's parameters  
-as a single vector with a regular expression of element types. This is a flexible and familiar model
-with a natural subtype structure. 
+a subclass `::joy/args-ret-fn` that simply provides a type for the function's arguments (as a single vector) 
+and the function's return value. Types in this class have values `::joy/type-of-args` and `::joy/type-of-ret`.
+Subtyping for this class is contravariant in `::joy-type-of-args`.
+
+In the future, Joy' will likely provide a different subclass that supports [dependent type](https:/en.wikipedia.org/wiki/Dependent_type) 
+relationships among arguments and parameters.
+
+## Heterogeneous Sequence Types
+
+Because Joy's main function subclass models a function's arguments as a single, heterogeneous vector,
+It is important that Joy' has a class `::joy/type-regex-seq` that naturally expresses the patterns
+that arise in argument vectors. This class follows Clojure spec alpha in modeling a heterogeneous seq
+as a regular expression of element types. This is flexible, familiar to most programmers, and has a 
+natural subtype structure.
   
 ## Metatypes
 
