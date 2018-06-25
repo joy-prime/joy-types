@@ -67,6 +67,8 @@ It is a Joy' value, and is itself described by a "metatype". (More on metatypes 
 
 A Joy' class identifies a constrained set of Joy' types, such as "vectors". It is identified by
 a Clojure keyword, which conventionally uses capitalized camel case, such as `::my/TaskManager`.
+There is a root class `::joy/Any` that is a superclass of all other classes. There is a leaf class
+`::joy/Void` that is a subclass of all other classes but has no values.
 
 From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
 runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
@@ -82,7 +84,7 @@ that bare class type. As a simpler way to say "member of of that bare class type
 
 If the set of types identified by a class has additional members beyond the bare class type, 
 then these additional "class types" are subtypes of the bare class type. For example, all vector types
-are subtypes of the bare vector type.
+are subtypes of the bare vector type. A given type is both a superclass and a subclass of itself.
 
 It is always possible to determine at runtime whether a given type is a subtype of another.
 
@@ -100,8 +102,8 @@ its methods. Rather, a given (namespaced) method symbol always has the same func
 is available in the method's metadata. The same method symbol can be used in multiple interfaces.  
 
 Each method takes an "instance" of the interface type as its first parameter and can be invoked 
-directly by client code. (To be precise, the phrase "instance of an interface type" means 
-a value that is a member of the interface type.)
+directly by client code. (The phrase "instance of an interface type" means a value
+that is a member of the interface type.)
 
 An interface implementation is a map from method symbols to method implementation functions. This is
 used when defining a class; it is *not* used by clients of the interface. Rather, a client directly
@@ -126,7 +128,37 @@ A Joy' class definition can specify the following:
   cannot be changed after the class is defined (unless the class is entirely redefined).
 
 * *interfaces*: defined for all values that are members of the bare class type. Additional interfaces
-  can be added after the class is defined. 
+  can be added after the class is defined.
+  
+* *parameters*: the names (keywords) of type parameters. When these represent types, they are taken
+  as covariant parameters for computing subtypes.
+
+* *contravariant parameters*: the name (keywords) of contravariant type parameters. These must all
+  represent types.
+
+  
+## Parameterized Types
+
+A Joy' type may have parameters, which are represented as a map from parameter name (a keyword) to
+parameter value (whose type depends on the keyword). 
+
+Parameters are applied to a type in three ways. These are listed from highest priority down:
+* A type can be constructed with parameters. 
+* A type can implicitly pick up parameters from its surrounding type.
+* If a parameter not specified in either of the above ways, then we call
+  it a "blank" type parameter. If a blank parameter's type implements the `::joy/HasDefault` interface,
+  then the parameter is taken to have that value. `::joy/Type` implements `::joy/HasDefault` with the 
+  default value of `::joy/Any`.
+
+Subtype relationships are computed after applying parameters as above. Given a covariant parameter P
+whose value is a type, for type S to be a subtype of a type T, the value of P for S must be a subtype
+of the value of P for T. Given a covariant parameter P whose value is not a type, the values of P for 
+S and T must be equal. All contravariant parameters are types; in that case the value of P for S must
+be a *supertype* of its value for T.
+
+Given a parameterized type and a value that is a member of the type, the `::joy/type-params`
+method returns a map with complete, specific type parameters for that value. "Specific" means
+type parameters that represent types are instantiated with the narrowest subtype that fits.
   
 ## Function Types
 
@@ -139,10 +171,11 @@ bare function type.
 As with all Joy' classes, `::joy/Function` has an open set of subclasses and subtypes. Joy' provides 
 a subclass `::joy/ArgsRetFn` that simply provides a type for the function's arguments (as a single vector) 
 and the function's return value. Types in this class have values `::joy/args-type` and `::joy/return-type`.
-Subtyping for this class is contravariant in `::joy/args-type`.
 
-In the future, Joy' will likely provide a different subclass that supports [dependent type](https:/en.wikipedia.org/wiki/Dependent_type) 
-relationships among arguments and parameters.
+Subtyping for this class is contravariant in `::joy/args-type` and covariant in `::joy/return-type`.
+
+In the future, Joy' will likely provide a different subclass that supports richer
+[dependent type](https:/en.wikipedia.org/wiki/Dependent_type) relationships among arguments and parameters.
 
 ## Heterogeneous Sequence Types
 
@@ -164,5 +197,5 @@ Every Joy' metatype is a subclass of `::joy/Type`, which defines the following i
  (! [this (! m ::joy/Map)] Value))
 
 (old "Creates a map that can be passed to `new` to exactly reproduce `this`." 
- (! [this (! v Value)] :joy.core/Map))
+ (! [this (! v Value)] ::joy/Map))
 ```
