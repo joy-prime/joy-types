@@ -50,19 +50,23 @@ spectrum that is painful from end to end -- it has no sweet spot:
   
 ## Overview
   
-Joy' explores a new point in the design space: an expressive and rigorous type system that fulfills
-a type system's traditional role for thinking and communicating about the code, but that is designed 
-for runtime validation instead of compile-time validation. Runtime validation includes both 
-switchable runtime checks and automatic [generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
+Joy' explores a new point in the programming language design space: an expressive and rigorous type system 
+that fulfills a type system's traditional role for thinking and communicating about the code, but that is 
+designed for runtime validation instead of compile-time validation. Runtime validation includes both 
+switchable runtime checks and automatic
+[generative testing](https://nofluffjuststuff.com/conference/raleigh/2013/08/session?id=29335).
 
-Joy's type system is described in terms that are familiar from Java or other languages,
-such as "class", "type", and "interface". Although at an abstract level these terms have their
-conventional meaning, Joy's specific usage is unique. In particular, none of these terms mean the
-same as in Clojure or Java. It is important to firmly anchor these terms in a mental Joy' namespace! 
+Joy's type system is described in terms that are familiar from Java and other languages, such as 
+"class", "type", and "interface". Although at an abstract level these terms have their conventional 
+meaning, Joy's specific usage is unique. In particular, they each refer to a different construct 
+than the same Clojure or Java term, so it is important to firmly anchor them in a mental Joy' namespace! 
 
-A Joy' type describes a constrained set of Joy' values, such as "a vector of integers". 
+A Joy' type describes a constrained set of Joy' values -- the "members" of the type -- 
+such as "vector of integers". A Joy' type has neither a name nor an identifier.  
+It is a Joy' value, and is itself described by a "metatype". (More on metatypes later.)
 
-A Joy' class identifies a constrained set of Joy' types, such as "vectors".
+A Joy' class identifies a constrained set of Joy' types, such as "vectors". It is identified by
+a Clojure keyword, which conventionally uses capitalized camel case, such as `::my/TaskManager`.
 
 From the Joy' programmer's perspective, classes and types are created, manipulated, and applied at 
 runtime rather than at compile time. A Joy' compiler or analysis tool may perform static
@@ -72,7 +76,9 @@ the main purpose of Joy' classes and types nor how programmers are encouraged to
 Every Joy' value has a class, which can be cheaply obtained from the value.
 
 Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
-bare vector type. All values having that class are members of that bare class type.
+bare vector type. All values having that class, or any direct or indirect subclass of it, are members of
+that bare class type. As a simpler way to say "member of of that bare class type", we also say
+"member of that class".
 
 If the set of types identified by a class has additional members beyond the bare class type, 
 then these additional "class types" are subtypes of the bare class type. For example, all vector types
@@ -83,13 +89,30 @@ It is always possible to determine at runtime whether a given type is a subtype 
 Joy' types are also Joy' values and can be freely manipulated at runtime.
 
 Because types are values, types themselves have classes and types. Each Joy' class has an 
-associated "metatype", which is the type of that class' types.
+associated "metatype", which is the type of that class' types. A metatype's class is referred
+to as a "metaclass" when that helps keep things straight in prose.
 
 A class can have one or more "interfaces", which are "interface implementations" of "interface types".
-An interface type specifies a set of Clojure symbols that refer to specially declared functions:
-the "methods" of the interface. Each method takes an instance of the interface type as its
-first parameter and can be invoked directly by client code. An interface implementation is a map from 
-method symbol to functions that implement the method for that class. 
+An interface type is a member of `::joy/Interface` and specifies a set of Clojure symbols that refer 
+to specially declared functions: the "methods" of the interface. Following the approach used by 
+Clojure spec for specifying maps, a `::joy/Interface` does *not* directly specify the types of
+its methods. Rather, a given (namespaced) method symbol always has the same function type, which
+is available in the method's metadata. The same method symbol can be used in multiple interfaces.  
+
+Each method takes an "instance" of the interface type as its first parameter and can be invoked 
+directly by client code. (To be precise, the phrase "instance of an interface type" means 
+a value that is a member of the interface type.)
+
+An interface implementation is a map from method symbols to method implementation functions. This is
+used when defining a class; it is *not* used by clients of the interface. Rather, a client directly
+invokes a method, which dispatches on the class of the first argument to the appropriate implementation
+function. 
+
+Every Clojure value is a Joy' value. A Clojure programmer would prefer that we simply refer to 
+these as "Clojure values" in this documentation, but here we show a slight bias toward Joy' programmers.
+Some Clojure values, such as functions, maps, and sequences, have rich class and type descriptions in 
+the Joy' type system. When a Clojure value does not have such a rich Joy' description, its Joy' class
+name is mechanically derived from its Java class name: `org.foo.BarBaz` becomes `:org.foo/BarBaz`.
 
 ## Class Definitions
 
@@ -107,38 +130,38 @@ A Joy' class definition can specify the following:
   
 ## Function Types
 
-All Clojure functions are members of the bare function type `joy/bare-type(::joy/function)`. 
-Clojure functions can also be declared with metadata that declares them to have more specific function subtypes. 
+All Clojure functions are members of `::joy/Function`. Clojure functions can also be declared with 
+metadata that declares them to have more specific function subtypes. 
 Note that this metadata is *not* associated with the function's symbol; rather, it is associated with
-the function object itself. It is the value of the key `::joy/type-of-fn`, which must be a subtype of the 
+the function object itself. It is the value of the key `::joy/fn-type`, which must be a subtype of the 
 bare function type.
 
-As with all Joy' classes, `::joy/function` has an open set of subclasses and subtypes. Joy' provides 
-a subclass `::joy/args-ret-fn` that simply provides a type for the function's arguments (as a single vector) 
-and the function's return value. Types in this class have values `::joy/type-of-args` and `::joy/type-of-ret`.
-Subtyping for this class is contravariant in `::joy-type-of-args`.
+As with all Joy' classes, `::joy/Function` has an open set of subclasses and subtypes. Joy' provides 
+a subclass `::joy/ArgsRetFn` that simply provides a type for the function's arguments (as a single vector) 
+and the function's return value. Types in this class have values `::joy/args-type` and `::joy/return-type`.
+Subtyping for this class is contravariant in `::joy/args-type`.
 
 In the future, Joy' will likely provide a different subclass that supports [dependent type](https:/en.wikipedia.org/wiki/Dependent_type) 
 relationships among arguments and parameters.
 
 ## Heterogeneous Sequence Types
 
-Because Joy's main function subclass models a function's arguments as a single, heterogeneous vector,
-It is important that Joy' has a class `::joy/type-regex-seq` that naturally expresses the patterns
-that arise in argument vectors. This class follows Clojure spec alpha in modeling a heterogeneous seq
-as a regular expression of element types. This is flexible, familiar to most programmers, and has a 
-natural subtype structure.
-  
+Joy' has a class `::joy/RegexSeq` that is a subclass of `::joy/Sequence` and that describes the values of
+a heterogeneous sequence as a regular expression of types. This class is frequently used to describe 
+the argument sequence for a `::joy/ArgsRetFn`. Joy' took inspiration here from Clojure spec because
+regular expressions are flexible, familiar  to most programmers, and naturally express common argument idioms
+such as multiple arities, optional arguments, repeated arguments, and repeated pairs of arguments.
+ 
 ## Metatypes
 
 A metatype usually has an interface that defines one or more constructors, which are methods that return members
 of the value class.
 
-Every Joy' metatype is a subclass of `:joy.core/type`, which defines the following interface:
+Every Joy' metatype is a subclass of `::joy/Type`, which defines the following interface:
 ```
 (new "Constructs a value of this type from the map `m`. If this type specifies a representation,
       then `m` must be an instance of that representation and `new` is a no-op." 
- (! [this (! m :joy.core/Map)] Value))
+ (! [this (! m ::joy/Map)] Value))
 
 (old "Creates a map that can be passed to `new` to exactly reproduce `this`." 
  (! [this (! v Value)] :joy.core/Map))
