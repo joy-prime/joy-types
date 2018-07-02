@@ -80,8 +80,8 @@ than the same Clojure or Java term, so it is important to firmly anchor them in 
 
 A Joy' type describes a constrained set of Joy' values -- the "members" of the type -- 
 such as "vector of integers". A Joy' type does not intrinsically have a name nor an identifier, 
-although it is commonly stored as the value of a Clojure symbol in a Clojure namespace.  
-It is a Joy' value, and is itself described by a "metatype". (More on metatypes later.)
+although types are commonly stored as the values of Clojure symbols.  
+A Joy' type is a Joy' value, and is itself described by a "metatype". (More on metatypes later.)
 
 A Joy' class identifies a constrained set of Joy' types, such as "vectors". It is identified by
 a Clojure keyword, which conventionally uses capitalized camel case, such as `::my/TaskManager`.
@@ -94,12 +94,12 @@ analysis for various reasons (such as to detect errors early or to optimize code
 the main purpose of Joy' classes and types nor how programmers are encouraged to think about them.
 
 Every Joy' value has a class, which can be cheaply obtained from the value. (We might be tempted
-to say "obtained at runtime", but we think of all type operations and validation in Joy' as happening
-at runtime.)
+to say "obtained at runtime", but from this point forward we will count on the reader to remember
+that all of this, at least conceptually, happens "at runtime".)
 
 Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
 bare vector type. All values having that class, or any of its direct or indirect subclasses, are members of
-ththeat bare class type. As a simpler way to say "member of of the bare class type", we also say
+the bare class type. As a simpler way to say "member of the bare class type", we also say
 "member of the class".
 
 If the set of types identified by a class has additional members beyond the bare class type, 
