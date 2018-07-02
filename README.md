@@ -171,9 +171,9 @@ used when defining a class; it is *not* used by clients of the interface. Rather
 Clojure function that the client directly invokes; the method dispatches on the class of its first argument 
 to the appropriate implementation function.
 
-When a method checks its parameter types, it provides the bare class type of its `this` argument
-in the `::joy/self` type parameter. This can be conveniently referenced in parameter types as
-the magical `joy/Self` type described above.
+When a method checks its argument and return types, it provides the bare class type of its `this` argument
+in the `::joy/self` type parameter. This can be conveniently referenced throughout the interface type 
+declaration as the magical `joy/Self` type described above.
 
 ## Class Definitions
 
