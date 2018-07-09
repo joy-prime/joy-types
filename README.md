@@ -78,9 +78,10 @@ Joy's type system is described in terms that are familiar from Java and other la
 meanings, Joy's concrete meanings are unique. In particular, they each refer to a different construct 
 than the same Clojure or Java term, so it is important to firmly anchor them in a mental Joy' namespace! 
 
-A Joy' type describes a constrained set of Joy' values -- the "members" of the type -- 
+A Joy' type describes a constrained set of Joy' values -- the "instances" of the type -- 
 such as "vector of integers". A Joy' type does not intrinsically have a name nor an identifier, 
-although types are commonly stored as the values of Clojure symbols.  
+although types are commonly stored as the values of Clojure symbols. (Also, we will see later
+that a Clojure keyword can be used as a special kind of type, called a "bare class type".)
 A Joy' type is a Joy' value, and is itself described by a "metatype". (More on metatypes later.)
 
 A Joy' class identifies a constrained set of Joy' types, such as "vectors". It is identified by
@@ -98,11 +99,12 @@ to say "obtained at runtime", but from this point forward we will count on the r
 that all of this, at least conceptually, happens "at runtime".)
 
 Every Joy' class has a corresponding "bare class type". For example, the vector class has a corresponding
-bare vector type. All values having that class, or any of its direct or indirect subclasses, are members of
-the bare class type. As a simpler way to say "member of the bare class type", we also say
-"member of the class".
+bare vector type. All values having that class, or any of its direct or indirect subclasses, are instances of
+the bare class type. As a simpler way to say "instance of the bare class type", we also say
+"instance of the class". Wherever a type can be used in Joy', a keyword can also be used to mean the 
+bare class type of the class identified by that keyword. 
 
-If the set of types identified by a class has additional members beyond the bare class type, 
+If the set of types identified by a class has additional instances beyond the bare class type, 
 then these additional "class types" are subtypes of the bare class type. For example, all vector types
 are subtypes of the bare vector type. A given type is both a superclass and a subclass of itself.
 
@@ -122,7 +124,10 @@ name is mechanically derived from its Java class name: `org.foo.BarBaz` becomes 
 
 ## Parameterized Types
 
-A Joy' type may have parameters. These are applied in three ways: 
+A Joy' type may have parameters. These are declared by a class. A subclass inherits all type parameters
+of its superclasses.
+
+Type parameters are applied in three ways: 
 
 * A type can be constructed with parameters. This is done through a "type parameter map", provided
   on type construction, where the keys are parameter names and the values are parameter values.
@@ -146,34 +151,26 @@ of the value of P for T. Given a covariant parameter P whose value is not a type
 S and T must be equal. All contravariant parameters are types; in that case the value of P for S must
 be a *supertype* of its value for T.
 
-Given a parameterized type and a value that is a member of the type, the `::joy/type-params`
+Given a parameterized type and a value that is a instance of the type, the `::joy/type-params`
 method returns a map with complete, specific type parameters for that value. "Specific" means that
 type parameters which represent types are instantiated with the narrowest subtype that fits.
 
-Joy' provides a magical type `joy/Self` that takes on the type value of its `::joy/self`
-type parameter.  
-  
 ## Interfaces
 
 A class can have one or more "interfaces", which are "interface implementations" of "interface types".
-An interface type is a member of the `::joy/Interface` class and specifies a set of Clojure symbols 
+An interface type is a instance of the `::joy/Interface` class and specifies a set of Clojure symbols 
 that refer to specially declared functions: the "methods" of the interface. Following the approach used by 
 Clojure spec for specifying maps, a `::joy/Interface` does *not* directly specify the types of
 its methods. Rather, a given (namespaced) method symbol always has the same function type, which
 is available in the method's metadata. The same method symbol can be used in multiple interfaces.  
 
-Each method takes an "instance" of the interface type as its first parameter (conventionally called `this`)
-and can be invoked directly by client code. (The phrase "instance of the interface type" means a value
-that is a member of the interface type.)
+Each method takes an instance of the interface type as its first parameter, conventionally called `this`.
+Methods are invoked directly by client code.
 
 An interface implementation is a map from method symbols to method implementation functions. This map is
 used when defining a class; it is *not* used by clients of the interface. Rather, each method is a 
 Clojure function that the client directly invokes; the method dispatches on the class of its first argument 
 to the appropriate implementation function.
-
-When a method checks its argument and return types, it provides the bare class type of its `this` argument
-in the `::joy/self` type parameter. This can be conveniently referenced throughout the interface type 
-declaration as the magical `joy/Self` type described above.
 
 ## Class Definitions
 
@@ -182,55 +179,102 @@ A Joy' class definition can specify the following:
 * *metatype*: the type of the class' types. If this is unspecified, then as a default, the class 
   is provided with a metatype that has a single value representing the bare class type.
 
-* *parent types*: supertypes of the bare class type. These are listed in priority order for the purpose
-  of choosing the implementation of an interface if more than one is available. The list of parent types
-  cannot be changed after the class is defined (unless the class is entirely redefined).
+* *parent types*: supertypes of the bare class type. Parent types are listed in priority order for the 
+  purpose of choosing the implementation of an interface if more than one is available. The list of parent 
+  types cannot be changed after the class is defined (unless the class is entirely redefined). Every class
+  has the bare class type of `::joy/Any` as an implicit supertype. It is fine to not explicitly list
+  any parent types. Defining parent types has two effects: 
+  
+** The class of each parent type becomes a superclass of this one. As a result, this class and its
+   descendants inherit the interfaces and type parameters (see below) of the superclass. Instances
+   of this class are guaranteed to be instances of the superclass.
+   
+** Also, instances of this class are guaranteed to be instances of each parent type. Whenever type
+   checking verifies that a value is an instance of this class, it also verifies that the value is
+   an instance of the parent type. 
 
-* *interfaces*: interface implementations that apply to values that are members of the bare class type. 
+* *interfaces*: interface implementations that apply to values that are instances of the bare class type. 
   Additional interfaces can be added after the class is defined.
   
 * *parameters*: the names (keywords) of type parameters. When these represent types, they are taken
-  as covariant parameters for computing subtypes.
+  as covariant parameters for computing subtypes. These are inherited by subclasses.
 
-* *contravariant parameters*: the name (keywords) of contravariant type parameters. These must all
-  represent types.
+* *contravariant parameters*: the name (keywords) of contravariant type parameters. These parameters must all
+  represent types. They are inherited by subclasses.
   
 ## Function Types
 
-All Clojure functions are members of `::joy/Function`. Clojure functions can also be declared with 
+All Clojure functions are instances of `::joy/Function`. Clojure functions can also be declared with 
 metadata that declares them to have more specific function subtypes. 
 This metadata is associated with the function object itself (*not* with the function's
 symbol as would be more typical in Clojure). It is the value of the key `::joy/fn-type`, 
 which must be a subtype of the bare function type.
 
-As with all Joy' classes, `::joy/Function` has an open set of subclasses and subtypes. Joy' provides 
-a subclass `::joy/ArgsRetFn` that simply provides a type for the function's arguments (as a single vector) 
-and the function's return value. Types in this class have values `::joy/args-type` and `::joy/return-type`.
-Subtyping for this class is contravariant in `::joy/args-type` and covariant in `::joy/return-type`.
+`::joy/Function` has no parent types beyond `::joy/Any`. As with all Joy' classes, 
+it has an open set of subclasses. These include a built-in subclass `::joy/TypedFunction` whose
+metaclass is `::joy/TypedFunctionType`. Instances of that metaclass (thus subtypes of `::joy/TypedFunction`)
+are constructed with a factory macro `Fun`. (So that's both fun with types and fun with a capital "F".
+What else could we call the functions of Joy?)
 
-In the future, Joy' will likely provide a different subclass that supports richer
-[dependent type](https:/en.wikipedia.org/wiki/Dependent_type) relationships among arguments and parameters.
+Each parameter of the `Fun` macro represents a possible parameter arity of the function and is
+expressed in a syntax that extends the Clojure parameter syntax with support for type constraints.
+We will explain the semantics of `::joy/TypedFunction` by explaining this syntax.
 
-## Heterogeneous Sequence Types
+If `[...]` is a legal Clojure function parameter syntax, then `(Fun [...])` is a legal invocation
+of the `Fun` macro. For example, `(Fun [coll x])` is legal. So is `(Fun [call x & xs])`.
 
-Joy' has a class `::joy/RegexSeq` that is a subclass of `::joy/Sequence` and that defines the type of
-a heterogeneous sequence as a regular expression of member types. This class is commonly used to describe 
-the argument sequence for a `::joy/ArgsRetFn`. Joy' took inspiration here from Clojure spec because
-regular expressions are flexible, familiar to most programmers, and naturally express common argument idioms
-such as multiple arities, optional arguments, repeated arguments, and repeated pairs of arguments.
- 
+Multiple arities are represented as multiple arguments to `Fun`. For example,
+`(Fun [coll x] [call x & xs])`.
+
+Any top-level binding form in a parameter list can be surrounded with `(! `form` `type-expr`)` to require 
+that the argument passed to that form must have a particular type. type-expr is any expression that
+evaluates to a type. For example, remembering that the keyword identifying a class can be used to
+represent the bare class type, we can write `(Fun [(! coll ::joy/Collection) x])`.
+
+The same `(! ...)` syntax can be used to specify a type for nested binding forms, including for
+individual symbols that will be bound. For example, although it doesn't add much, we could
+write `(Fun [(! [fst snd] ::joy/Vector) z])` to indicate that the argument supplied for `[fst snd]`
+must be a vector.
+
+The `(! ...)` syntax can also be wrapped around the entire parameter vector to supply a return type.
+For example: `(Fun (! [coll x] ::joy/Collection))`.
+
+We can freely combine the above usages. For example:
+```
+(Fun (! [(! coll ::joy/Collection) x] 
+        ::joy/Collection))
+```  
+
+
+
+
 ## Metatypes
 
-A metatype usually has an interface that defines one or more constructors, which are methods that return members
-of the value class.
+Every Joy' metaclass is a subclass of `::joy/Type`. A metaclass usually has an interface that defines 
+one or more constructors, which are methods that return instances of the value class.
 
-Every Joy' metatype is a subclass of `::joy/Type`, which has the following interface:
+Although all metaclasses descend from a common superclass, 
+the metaclass hierarchy does not mirror the class hierarchy of the corresponding value classes. This would
+not make sense because an interface on a superclass cannot always be sensibly applied to a subclass. As
+a simple example, consider a superclass Person with a subclass Employee. The subclass constructor may
+require a Business parameter that has no sensible default value.
+
+That said, sometimes we want to express a metatype whose instances are guaranteed to be subtypes
+of a particular type. To support this, `::joy/Type` has a type parameter `::joy/for` whose value is
+the type represented by that metatype.
+
+`::joy/Type` has the following interface:
+
 ```
-(definterface IType new)
+(definterface IType new-map-type new)
+
+(defmethod from-map-type
+  "Returns the `::joy/Map` subtype that must be passed to `new` to construct an instance of this type."
+  [this] (type ::joy/Type {::joy/for ::joy/Map))
 
 (defmethod new
   "Constructs a value of this type from the map `m`."
-  [this (! m joy/Map)]
+  [this (! m (from-map-type this))]
   Value)
 ```
 
