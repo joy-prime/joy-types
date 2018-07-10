@@ -226,10 +226,13 @@ of the `Fun` macro. For example, `(Fun [coll x])` is legal. So is `(Fun [call x 
 Multiple arities are represented as multiple arguments to `Fun`. For example,
 `(Fun [coll x] [call x & xs])`.
 
-Any top-level binding form in a parameter list can be surrounded with `(! `form` `type-expr`)` to require 
-that the argument passed to that form must have a particular type. type-expr is any expression that
+Any top-level binding form in a parameter list can be surrounded a type declaration `(! `form` `type-expr`)`
+to require that the argument passed to that form must have a particular type. type-expr is any expression that
 evaluates to a type. For example, remembering that the keyword identifying a class can be used to
 represent the bare class type, we can write `(Fun [(! coll ::joy/Collection) x])`.
+
+Type declarations never change the binding behavior of a parameter list. In particular, if type declarations
+are removed, the binding behavior is exactly as normal for Clojure.
 
 The same `(! ...)` syntax can be used to specify a type for nested binding forms, including for
 individual symbols that will be bound. For example, although it doesn't add much, we could
@@ -245,8 +248,21 @@ We can freely combine the above usages. For example:
         ::joy/Collection))
 ```  
 
+Binding is performed before type expressions are evaluated or types are checked. Also, type expressions
+are evaluated in a context where the bound symbols are available as variables. So a type expression 
+anywhere in the same parameter list (the same arity) can freely refer to symbols bound by the parameter
+list.
 
+Type expressions must be pure, in the sense of referentially transparent -- consuming neither external data
+nor mutable data. Otherwise, the behavior of type checking is undefined. Implementations may make reasonable
+behavior to detect this and indicate an error.
 
+A `Fun` type S is a subtype of another, T, if the implementation is able to verify that all argument values
+which are legal for T are also legal for S, and that all return values which are legal for S are also legal
+for T. In other words, subtyping is contravariant in function parameters but covariant in the function
+return value, but a subtype relationship exists only if the implementation can verify those relationships.
+Over time, the Joy' type specification will be extended to make some guarantees about which function subtype
+relationships can be verified.
 
 ## Metatypes
 
