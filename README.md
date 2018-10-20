@@ -1,4 +1,4 @@
-# The Joy' Type System, for Use in Clojure
+# The Joy' Type System, for Use in Clojure (Vaporware)
 
 This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) (Joy') runtime type system
 for use in Clojure programs. Although the Joy' language provides additional linguistic support, 
