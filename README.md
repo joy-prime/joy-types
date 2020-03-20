@@ -1,4 +1,6 @@
-# The Joy' Type System, for Use in Clojure (Vaporware)
+# The Joy' Type System, for Use in Clojure
+
+**PAUSED INDEFINITELY -- instead see wisdom-kotlin**
 
 This library provides the entire [Joy Prime](https://github.com/joy-prime/joy-prime) (Joy') runtime type system
 for use in Clojure programs. Although the Joy' language provides additional linguistic support, 
